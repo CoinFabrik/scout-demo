@@ -1,0 +1,58 @@
+name: Run Scout-action
+description: Run scout-action
+author: Coinfabrik
+
+# Define your inputs here.
+inputs:
+  working_directory:
+    description: Folder to scan for Cargo.toml
+    required: false
+    default: "."
+  verbose:
+    description: Whether to run scout in verbose mode
+    required: false
+    default: true
+  fail_on_error:
+    description: Whether to fail the action if Scout finds issues
+    required: false
+    default: true
+  comment_pr:
+    description: Whether to prepare the report for PR commenting
+    required: false
+    default: true
+  github_token:
+    description: GitHub token (needed if comment-pr is true)
+    required: false
+  scout_extra_args:
+    description: Scout extra args
+    required: false
+    default: ""
+
+#run docker
+runs:
+  using: "composite"
+  steps:
+    - name: Run scout analysis
+      uses: docker
+      image: Dockerfile
+      args:
+        - ${{ inputs.working_directory }}
+      env:
+        INPUT_TARGET: ${{ inputs.working_directory }}
+        INPUT_SCOUT_ARGS: " ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /github/workspace/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}"
+
+    - name: Comment on PR
+      if: ${{ inputs.comment_pr == 'true' }}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        token: ${{ inputs.github_token }}
+        body-path: ${{ inputs.working_directory }}/report.md
+
+    - name: Fail on error
+      if: ${{ inputs.fail_on_error == 'true' }}
+      run: |
+        if [ -f "/github/workspace/FAIL" ]; then
+          echo "Error: Scout found issues."
+          exit 1
+        fi
