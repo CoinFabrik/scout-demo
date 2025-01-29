@@ -47,7 +47,7 @@ runs:
         docker run \
           -v $(pwd):/scoutme \
           -w /scoutme \
-          -e INPUT_TARGET="/scoutme/Cargo.toml" \
+          -e INPUT_TARGET="." \
           -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /github/workspace/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}" \
           scout-action
 
