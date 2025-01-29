@@ -43,11 +43,15 @@ runs:
         pwd
         ls -la
 
+        cd ${{ inputs.working_directory }}
+        pwd
+        ls -la
+
         # Run the container with the workspace mounted
         docker run \
-          -v $(pwd):/scoutme \
+          -v ${{ github.workspace }}:/scoutme \
           -w /scoutme \
-          -e INPUT_TARGET="." \
+          -e INPUT_TARGET="${{ inputs.working_directory }}" \
           -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /github/workspace/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}" \
           scout-action
 
@@ -57,7 +61,7 @@ runs:
       with:
         issue-number: ${{ github.event.pull_request.number }}
         token: ${{ inputs.github_token }}
-        body-path: ${{ inputs.working_directory }}/report.md
+        body-path: /github/workspace/report.md
 
     - name: Fail on error
       if: ${{ inputs.fail_on_error == 'true' }}
