@@ -2,7 +2,6 @@ name: Run Scout-action
 description: Run scout-action
 author: Coinfabrik
 
-# Define your inputs here.
 inputs:
   working_directory:
     description: Folder to scan for Cargo.toml
@@ -38,6 +37,9 @@ runs:
         cd ${{ github.action_path }}
         docker build -t scout-action .
 
+        # Create a directory for the report
+        mkdir -p ${{ github.workspace }}/scout-report
+
         # Go back to the workspace root to run the container
         cd ${{ github.workspace }}
         pwd
@@ -47,13 +49,19 @@ runs:
         pwd
         ls -la
 
-        # Run the container with the workspace mounted
+        # Run the container with proper volume mounting
         docker run \
           -v ${{ github.workspace }}:/scoutme \
+          -v ${{ github.workspace }}/scout-report:/output \
           -w /scoutme \
           -e INPUT_TARGET="${{ inputs.working_directory }}" \
-          -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path ${{ github.workspace }}/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}" \
+          -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /output/report.md' || '' }} --cicd /output ${{ inputs.scout_extra_args }}" \
           scout-action
+
+        # Copy the report file to the expected location if it exists
+        if [ -f "${{ github.workspace }}/scout-report/report.md" ]; then
+          cp ${{ github.workspace }}/scout-report/report.md ${{ github.workspace }}/report.md
+        fi
 
     - name: Comment on PR
       if: ${{ inputs.comment_pr == 'true' }}
@@ -67,7 +75,7 @@ runs:
       if: ${{ inputs.fail_on_error == 'true' }}
       shell: bash
       run: |
-        if [ -f "/github/workspace/FAIL" ]; then
+        if [ -f "${{ github.workspace }}/scout-report/FAIL" ]; then
           echo "Error: Scout found issues."
           exit 1
         fi
