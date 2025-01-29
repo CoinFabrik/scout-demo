@@ -33,24 +33,19 @@ runs:
     - name: Run scout analysis
       shell: bash
       run: |
-        # Function for logging
         log() {
           echo "[INFO] $1"
         }
 
-        # Set Docker quiet flag based on verbose input
         DOCKER_QUIET=${{ inputs.verbose == 'true' && '' || '--quiet' }}
 
-        # Build the Docker image
         log "Building Scout Docker image..."
         cd ${{ github.action_path }}
         docker build $DOCKER_QUIET -t scout-action . > /dev/null 2>&1
 
-        # Prepare output directory
         log "Preparing workspace..."
         mkdir -p ${{ github.workspace }}/scout-report
 
-        # Run Scout analysis
         log "Running Scout analysis..."
         docker run $DOCKER_QUIET \
           -v ${{ github.workspace }}:/scoutme \
@@ -60,7 +55,6 @@ runs:
           -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /output/report.md' || '' }} --cicd /output ${{ inputs.scout_extra_args }}" \
           scout-action
 
-        # Handle report file
         if [ -f "${{ github.workspace }}/scout-report/report.md" ]; then
           log "Copying Scout report..."
           cp ${{ github.workspace }}/scout-report/report.md ${{ github.workspace }}/report.md
