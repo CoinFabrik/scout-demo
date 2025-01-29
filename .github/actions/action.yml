@@ -28,18 +28,18 @@ inputs:
     required: false
     default: ""
 
-#run docker
 runs:
   using: "composite"
   steps:
     - name: Run scout analysis
-      uses: docker
-      image: Dockerfile
-      args:
-        - ${{ inputs.working_directory }}
-      env:
-        INPUT_TARGET: ${{ inputs.working_directory }}
-        INPUT_SCOUT_ARGS: " ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /github/workspace/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}"
+      shell: bash
+      run: |
+        docker build -t scout-action .
+        docker run \
+          -v ${{ inputs.working_directory }}:/scoutme \
+          -e INPUT_TARGET=${{ inputs.working_directory }} \
+          -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /github/workspace/report.md' || '' }} --cicd /github/workspace ${{ inputs.scout_extra_args }}" \
+          scout-action
 
     - name: Comment on PR
       if: ${{ inputs.comment_pr == 'true' }}
@@ -51,6 +51,7 @@ runs:
 
     - name: Fail on error
       if: ${{ inputs.fail_on_error == 'true' }}
+      shell: bash
       run: |
         if [ -f "/github/workspace/FAIL" ]; then
           echo "Error: Scout found issues."
