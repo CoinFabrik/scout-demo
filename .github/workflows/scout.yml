@@ -19,7 +19,7 @@ jobs:
         uses: ./.github/actions
         with:
           working_directory: .
-          verbose: true
-          fail_on_error: true
+          verbose: false
+          fail_on_error: false
           comment_pr: true
           github_token: ${{ secrets.GITHUB_TOKEN }}

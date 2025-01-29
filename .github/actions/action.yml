@@ -33,24 +33,26 @@ runs:
     - name: Run scout analysis
       shell: bash
       run: |
-        # Build the Docker image from the action directory
-        cd ${{ github.action_path }}
-        docker build -t scout-action .
+        # Function for logging
+        log() {
+          echo "[INFO] $1"
+        }
 
-        # Create a directory for the report
+        # Set Docker quiet flag based on verbose input
+        DOCKER_QUIET=${{ inputs.verbose == 'true' && '' || '--quiet' }}
+
+        # Build the Docker image
+        log "Building Scout Docker image..."
+        cd ${{ github.action_path }}
+        docker build $DOCKER_QUIET -t scout-action . > /dev/null 2>&1
+
+        # Prepare output directory
+        log "Preparing workspace..."
         mkdir -p ${{ github.workspace }}/scout-report
 
-        # Go back to the workspace root to run the container
-        cd ${{ github.workspace }}
-        pwd
-        ls -la
-
-        cd ${{ inputs.working_directory }}
-        pwd
-        ls -la
-
-        # Run the container with proper volume mounting
-        docker run \
+        # Run Scout analysis
+        log "Running Scout analysis..."
+        docker run $DOCKER_QUIET \
           -v ${{ github.workspace }}:/scoutme \
           -v ${{ github.workspace }}/scout-report:/output \
           -w /scoutme \
@@ -58,8 +60,9 @@ runs:
           -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /output/report.md' || '' }} --cicd /output ${{ inputs.scout_extra_args }}" \
           scout-action
 
-        # Copy the report file to the expected location if it exists
+        # Handle report file
         if [ -f "${{ github.workspace }}/scout-report/report.md" ]; then
+          log "Copying Scout report..."
           cp ${{ github.workspace }}/scout-report/report.md ${{ github.workspace }}/report.md
         fi
 
@@ -76,6 +79,6 @@ runs:
       shell: bash
       run: |
         if [ -f "${{ github.workspace }}/scout-report/FAIL" ]; then
-          echo "Error: Scout found issues."
+          echo "[ERROR] Scout found issues."
           exit 1
         fi
