@@ -34,6 +34,7 @@ runs:
     - name: Run scout analysis
       shell: bash
       run: |
+        cd ${{ github.action_path }}
         docker build -t scout-action .
         docker run \
           -v ${{ inputs.working_directory }}:/scoutme \
