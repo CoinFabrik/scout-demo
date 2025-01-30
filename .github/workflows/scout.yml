@@ -26,10 +26,6 @@ jobs:
       - name: Display Report
         if: always()
         run: |
-          if [ -f "${{ github.workspace }}/report.md" ]; then
-            cat "${{ github.workspace }}/report.md"
-          else
-            echo "::warning::No report file was generated at ${{ github.workspace }}/report.md"
-            echo "Checking scout-report directory contents:"
-            ls -la "${{ github.workspace }}/scout-report" || echo "scout-report directory not found"
+          if [[ -n "${{ steps.scout.outputs.report }}" ]]; then
+            cat "${{ steps.scout.outputs.report }}"
           fi
