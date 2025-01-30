@@ -15,11 +15,17 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: do scout
-        uses: coinfabrik/scout-actions@v3
+      - name: Run scout
+        id: scout
+        uses: ./.github/actions
         with:
-          target: ''
+          working_directory: .
+          fail_on_error: false
+          comment_pr: false
 
-      - uses: mshick/add-pr-comment@v2.8.2
-        with:
-          message-path:  ${{ github.workspace }}/report.md
+      - name: Display Report
+        if: always()
+        run: |
+          if [[ -n "${{ steps.scout.outputs.report }}" ]]; then
+            cat "${{ steps.scout.outputs.report }}"
+          fi
