@@ -21,8 +21,15 @@ jobs:
         with:
           working_directory: .
           fail_on_error: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          comment_pr: false
 
-      - name: Cat report
+      - name: Display Report
+        if: always()
         run: |
-          cat ${{ steps.scout.outputs.report }}
+          if [ -f "${{ github.workspace }}/report.md" ]; then
+            cat "${{ github.workspace }}/report.md"
+          else
+            echo "::warning::No report file was generated at ${{ github.workspace }}/report.md"
+            echo "Checking scout-report directory contents:"
+            ls -la "${{ github.workspace }}/scout-report" || echo "scout-report directory not found"
+          fi

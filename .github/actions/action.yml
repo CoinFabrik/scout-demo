@@ -35,7 +35,7 @@ inputs:
       Automatically comment analysis results on the PR.
       Requires 'github_token' to be set.
     required: false
-    default: true
+    default: false
 
   github_token:
     description: |
@@ -118,7 +118,7 @@ runs:
       shell: bash
       run: |
         if [ -f "${{ github.workspace }}/scout-report/FAIL" ]; then
-          echo "❌ [ERROR] Scout analysis failed! Please check the report for details."
+          echo "[ERROR] Scout analysis failed! Please check the report for details."
           exit 1
         fi
         echo "✅ Scout analysis completed successfully!"
