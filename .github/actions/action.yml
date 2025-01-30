@@ -50,6 +50,10 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  report:
+    description: "Path to the generated markdown report file if it was created"
+
 runs:
   using: "composite"
   steps:
@@ -91,13 +95,14 @@ runs:
           -v "$REPORT_DIR:/output" \
           -w /scoutme \
           -e INPUT_TARGET="${{ inputs.working_directory }}" \
-          -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} ${{ inputs.comment_pr == 'true' && '--output-format md-gh --output-path /output/report.md' || '' }} --cicd /output ${{ inputs.scout_extra_args }}" \
+          -e INPUT_SCOUT_ARGS=" ${{ inputs.verbose == 'true' && '-v' || '' }} --output-format md-gh --output-path /output/report.md --cicd /output ${{ inputs.scout_extra_args }}" \
           scout-action
 
         if [ -f "$REPORT_DIR/report.md" ]; then
           section "Processing Results"
           log "Copying Scout report to workspace..."
           cp "$REPORT_DIR/report.md" "$WORKSPACE/report.md"
+          echo "report=$WORKSPACE/report.md" >> $GITHUB_OUTPUT
         fi
 
     - name: Comment on PR

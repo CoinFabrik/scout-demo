@@ -15,8 +15,13 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: do scout
+      - name: Run scout
+        id: scout
         uses: ./.github/actions
         with:
           working_directory: .
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cat report
+        run: |
+          cat ${{ steps.scout.outputs.report }}
